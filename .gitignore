@@ -1,0 +1,46 @@
+# --- Dependencies ---
+node_modules/
+.pnpm-debug.log*
+
+# --- Next.js ---
+.next/
+out/
+build/
+*.tsbuildinfo
+
+# --- Foundry / Solidity ---
+# Foundry build artifacts and cache
+out/
+cache/
+# Forge deployment logs (can contain sensitive info)
+broadcast/
+
+artifacts/
+typechain/
+typechain-types/
+
+# --- Environment & Secrets (CRITICAL) ---
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+# Private key files
+*.key
+*.pem
+
+# --- Monorepo Tools ---
+.turbo/
+.cache/
+
+# --- OS / IDE Files ---
+.DS_Store
+.vscode/*
+!.vscode/extensions.json
+!.vscode/settings.json
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.swp
