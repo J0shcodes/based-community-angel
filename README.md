@@ -26,13 +26,20 @@ micro-grant vaults.
 
 ------------------------------------------------------------------------
 
+## 🛠️ Tech Stack
+- **Orchestrator:** [OpenClaw](https://openclaw.ai) (Social Intelligence & Memory)
+- **Onchain Execution:** Coinbase AgentKit (CDP)
+- **Communication:** XMTP (Native Base App Messaging)
+
+------------------------------------------------------------------------
+
 # 🧱 Architecture Overview
 
     User (Base App / XMTP)
             ↓
-    Angel Bot (TypeScript Service)
+    OpenClaw Orchestrator (The "Brain" using SOUL.md)
             ↓
-    Reputation Engine (Deterministic Logic)
+    Deterministic Skill (reputation.ts)
             ↓
     BasedAngelVault.sol (Smart Contract)
             ↓

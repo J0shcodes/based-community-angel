@@ -17,48 +17,32 @@ Core principles:
 
 ## 2. High-Level Architecture
 
-User (Base App / XMTP) ↓ Bot Service (TypeScript Runtime) ↓ Reputation
-Engine (Deterministic Formula) ↓ BasedAngelVault.sol (On-chain
-Enforcement) ↓ AngelSparkNFT.sol (Soulbound Reputation Badge)
+User (Base App / XMTP) ↓ OpenClaw Orchestrator (SOUL.md) ↓ Reputation Engine (Deterministic Skill) ↓ BasedAngelVault.sol (On-chain Enforcement) ↓ AngelSparkNFT.sol (Soulbound Reputation Badge)
 
 ------------------------------------------------------------------------
 
 ## 3. Components Breakdown
 
-### 3.1 XMTP Listener
+### 3.1 OpenClaw Orchestrator
 
-Responsible for: - Listening for payment request messages - Parsing
-requested token and amount - Validating message structure
-
-No financial execution occurs here.
+*   **Cognitive Core:** Uses `SOUL.md` to define the "Based Angel" personality and rules of engagement.
+*   **Episodic Memory:** Maintains `MEMORY.md` to track past interactions with users, preventing repetitive begging and allowing for "character" growth.
+*   **Input Handling:** Receives native XMTP "Payment Requests" as external pokes, which the LLM interprets before deciding to trigger a skill.
 
 ------------------------------------------------------------------------
 
 ### 3.2 Reputation Engine
-
-Location: bot-service/src/reputation.ts
-
-Function: - Fetch Farcaster score (via Neynar) - Fetch Talent Protocol
-builder score - Check Basename ownership - Normalize values to 0--1
-range - Compute:
-
-R = (0.3 × Farcaster) + (0.5 × Talent) + (0.2 × Basename)
-
-If R ≥ 0.7 → Eligible If R \< 0.7 → Rejected
-
-All inputs and outputs are logged.
+*   **Location:** `bot-service/src/skills/reputation.ts`
+*   **Function:** This is a deterministic skill. OpenClaw passes the requester's address to this skill, which calculates the score ($R$) using the fixed formula.
+*   **Guardrail:** The LLM cannot "hallucinate" an approval; it must receive a success flag from this skill to proceed to the Vault Client.
 
 ------------------------------------------------------------------------
 
 ### 3.3 Vault Client
 
-Location: bot-service/src/vaultClient.ts
-
-Responsible for: - Calling disburse() on BasedAngelVault - Handling
-transaction confirmation - Updating local logs
-
-The contract enforces: - Per-request cap - 30-day cooldown - Daily
-global cap - Token whitelist
+### 3.3 Vault & NFT Clients (Action Skills)
+*   **Location:** `bot-service/src/skills/vault_ops.ts` and `badge_ops.ts`
+*   **Integration:** These skills use CDP AgentKit to sign and broadcast transactions once OpenClaw has confirmed the reputation score meets the threshold ($R \ge 0.7$).
 
 ------------------------------------------------------------------------
 
@@ -118,6 +102,16 @@ Phase 2: - Endorsement modifier
 
 Phase 3: - Modular ScoreProvider interface - SDK release - Governance
 integration
+
+------------------------------------------------------------------------
+
+## 7 Cognitive Guardrails
+
+*   **Sandbox Execution:** The OpenClaw runtime is isolated to prevent unauthorized system access.
+
+*   **Deterministic Overrides:** Financial execution (disbursing funds) is locked behind the Reputation Skill. The agent cannot bypass the $R \ge 0.7$ check through prompt injection.
+*   **Spending Caps:** Smart contract constraints (DAILY_GLOBAL_CAP) act as the final defense if the agent's logic is compromised.
+
 
 ------------------------------------------------------------------------
 

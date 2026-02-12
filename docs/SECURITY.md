@@ -100,6 +100,18 @@ Public dashboard visibility
 
 ------------------------------------------------------------------------
 
+## 7. Agentic Risk Mitigation:
+
+Worst-case scenarios:
+
+1.  **Prompt Injection Protection:** Even if a user tricks the OpenClaw LLM into wanting to send money, the AgentKit Skill independently verifies the Reputation Score ($R$) before signing the transaction.
+2.  **Sandboxed Execution:** The OpenClaw runtime is isolated, ensuring that a compromised agent cannot access the host machine's root files.
+
+Impact is limited due to: - Per-user cooldown - Daily global cap -
+Public dashboard visibility
+
+------------------------------------------------------------------------
+
 ## 7. Transparency as Defense
 
 Public visibility includes:
