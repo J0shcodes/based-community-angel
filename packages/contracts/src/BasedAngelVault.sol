@@ -16,12 +16,29 @@ contract BasedAngelVault is Ownable2Step, Pausable, ReentrancyGuard {
     using SafeERC20 for IERC20;
 
     // Events
-    event DisbursementExecuted(address indexed recipient, address indexed token, uint256 amount, uint256 timestamp);
-    event DisbursementRejected(address indexed recipient, string reason, uint256 timestamp);
-    event DonationReceived(address indexed donor, address indexed token, uint256 amount, uint256 timestamp);
+    event DisbursementExecuted(
+        address indexed recipient,
+        address indexed token,
+        uint256 amount,
+        uint256 timestamp
+    );
+    event DisbursementRejected(
+        address indexed recipient,
+        string reason,
+        uint256 timestamp
+    );
+    event DonationReceived(
+        address indexed donor,
+        address indexed token,
+        uint256 amount,
+        uint256 timestamp
+    );
     event TokenAdded(address indexed token, uint256 timestamp);
     event TokenRemoved(address indexed token, uint256 timestamp);
-    event OperatorUpdated(address indexed oldOperator, address indexed newOperator);
+    event OperatorUpdated(
+        address indexed oldOperator,
+        address indexed newOperator
+    );
     event CapUpdated(string capType, uint256 oldValue, uint256 newValue);
     event EmergencyPaused(uint256 timestamp);
     event EmergencyUnpaused(uint256 timestamp);
@@ -58,7 +75,13 @@ contract BasedAngelVault is Ownable2Step, Pausable, ReentrancyGuard {
         _;
     }
 
-    constructor(address owner, address operator, uint256 maxPerRequest, uint256 dailyGlobalCap, uint256 userCooldown) Ownable(owner) {
+    constructor(
+        address owner,
+        address operator,
+        uint256 maxPerRequest,
+        uint256 dailyGlobalCap,
+        uint256 userCooldown
+    ) Ownable(owner) {
         if (operator == address(0)) revert ZeroAddress();
 
         s_operator = operator;
@@ -69,7 +92,7 @@ contract BasedAngelVault is Ownable2Step, Pausable, ReentrancyGuard {
         s_supportedTokens[address(0)] = true;
     }
 
-/// @dev Internal helper to get vault balance for any token
+    /// @dev Internal helper to get vault balance for any token
     function _getVaultBalance(address token) internal view returns (uint256) {
         if (token == address(0)) {
             return address(this).balance;
@@ -84,8 +107,11 @@ contract BasedAngelVault is Ownable2Step, Pausable, ReentrancyGuard {
     /// @param token Token address (address(0) for ETH)
     /// @param amount Amount to disburse
     /// @return success True if disbursement succeeded
-    function disburse(address recipient, address token, uint256 amount) external onlyOperator whenNotPaused nonReentrant returns (bool) {
-        
+    function disburse(
+        address recipient,
+        address token,
+        uint256 amount
+    ) external onlyOperator whenNotPaused nonReentrant returns (bool) {
         if (recipient == address(0)) revert ZeroAddress();
         if (amount == 0) revert InvalidAmount();
 
@@ -97,27 +123,51 @@ contract BasedAngelVault is Ownable2Step, Pausable, ReentrancyGuard {
         uint256 currentDailySpent = s_dailySpent;
 
         if (!s_supportedTokens[token]) {
-            emit DisbursementRejected(recipient, "Invalid token", block.timestamp);
+            emit DisbursementRejected(
+                recipient,
+                "Invalid token",
+                block.timestamp
+            );
             revert InvalidToken();
         }
 
         if (amount > s_maxPerRequest) {
-            emit DisbursementRejected(recipient, "Exceeds per-request cap", block.timestamp);
+            emit DisbursementRejected(
+                recipient,
+                "Exceeds per-request cap",
+                block.timestamp
+            );
             revert ExceedsPerRequestCap();
         }
 
         if (currentDailySpent + amount > s_dailyGlobalCap) {
-            emit DisbursementRejected(recipient, "Exceeds daily global cap", block.timestamp);
+            emit DisbursementRejected(
+                recipient,
+                "Exceeds daily global cap",
+                block.timestamp
+            );
             revert ExceedsDailyGlobalCap();
         }
 
-        if (block.timestamp < s_lastRequestTime[recipient] + s_userCooldown) {
-            emit DisbursementRejected(recipient, "Cooldown not expired", block.timestamp);
-            revert CooldownNotExpired();
+        if (s_hasReceivedFunds[recipient]) {
+            if (
+                block.timestamp < s_lastRequestTime[recipient] + s_userCooldown
+            ) {
+                emit DisbursementRejected(
+                    recipient,
+                    "Cooldown not expired",
+                    block.timestamp
+                );
+                revert CooldownNotExpired();
+            }
         }
 
         if (_getVaultBalance(token) < amount) {
-            emit DisbursementRejected(recipient, "Insufficient vault balance", block.timestamp);
+            emit DisbursementRejected(
+                recipient,
+                "Insufficient vault balance",
+                block.timestamp
+            );
             revert InsufficientVaultBalance();
         }
 
@@ -141,7 +191,7 @@ contract BasedAngelVault is Ownable2Step, Pausable, ReentrancyGuard {
 
     /// @notice Adds a token to the supported tokens whitelist
     /// @param token Token address to add (address(0) for ETH)
-    function addSupportedToken(address token) external onlyOwner  {
+    function addSupportedToken(address token) external onlyOwner {
         s_supportedTokens[token] = true;
         emit TokenAdded(token, block.timestamp);
     }
@@ -160,8 +210,8 @@ contract BasedAngelVault is Ownable2Step, Pausable, ReentrancyGuard {
         emit CapUpdated("Daily Global Cap", oldCap, newCap);
     }
 
-    function updatePerRequestCap (uint256 newCap) external onlyOwner {
-        if (newCap == 0) revert InvalidAmount(); 
+    function updatePerRequestCap(uint256 newCap) external onlyOwner {
+        if (newCap == 0) revert InvalidAmount();
         if (newCap > s_dailyGlobalCap) revert ExceedsPerRequestCap();
         uint256 oldCap = s_maxPerRequest;
         s_maxPerRequest = newCap;
@@ -188,7 +238,12 @@ contract BasedAngelVault is Ownable2Step, Pausable, ReentrancyGuard {
     // Funding functions
     receive() external payable {
         s_totalDonated[msg.sender] += msg.value;
-        emit DonationReceived(msg.sender, address(0), msg.value, block.timestamp);
+        emit DonationReceived(
+            msg.sender,
+            address(0),
+            msg.value,
+            block.timestamp
+        );
     }
 
     function donate(address token, uint256 amount) external {
@@ -208,11 +263,14 @@ contract BasedAngelVault is Ownable2Step, Pausable, ReentrancyGuard {
         return _getVaultBalance(token);
     }
 
-    function getUserCooldownRemaining(address user) external view returns (uint256) {
+    function getUserCooldownRemaining(
+        address user
+    ) external view returns (uint256) {
         uint256 lastRequest = s_lastRequestTime[user];
         uint256 cooldownEnd = lastRequest + s_userCooldown;
-    
-        return block.timestamp >= cooldownEnd ? 0 : cooldownEnd - block.timestamp;
+
+        return
+            block.timestamp >= cooldownEnd ? 0 : cooldownEnd - block.timestamp;
     }
 
     function getDailySpendingRemaining() external view returns (uint256) {
@@ -225,7 +283,9 @@ contract BasedAngelVault is Ownable2Step, Pausable, ReentrancyGuard {
         return block.timestamp >= s_lastRequestTime[user] + s_userCooldown;
     }
 
-    function getUserStats(address user) external view returns (uint256 totalReceived, uint256 lastRequestTime) {
+    function getUserStats(
+        address user
+    ) external view returns (uint256 totalReceived, uint256 lastRequestTime) {
         return (s_totalReceived[user], s_lastRequestTime[user]);
     }
 
@@ -237,10 +297,26 @@ contract BasedAngelVault is Ownable2Step, Pausable, ReentrancyGuard {
         return s_supportedTokens[token];
     }
 
-    function getUserFullStats(address user) external view returns (uint256 totalReceived, uint256 totalDonated, uint256 lastRequestTime, uint256 cooldownRemaining, bool hasReceived, bool isEligible) {
-        uint256 cooldown = block.timestamp >= s_lastRequestTime[user] + s_userCooldown ? 0 : (s_lastRequestTime[user] + s_userCooldown) - block.timestamp;
+    function getUserFullStats(
+        address user
+    )
+        external
+        view
+        returns (
+            uint256 totalReceived,
+            uint256 totalDonated,
+            uint256 lastRequestTime,
+            uint256 cooldownRemaining,
+            bool hasReceived,
+            bool isEligible
+        )
+    {
+        uint256 cooldown = block.timestamp >=
+            s_lastRequestTime[user] + s_userCooldown
+            ? 0
+            : (s_lastRequestTime[user] + s_userCooldown) - block.timestamp;
         return (
-            s_totalReceived[user], 
+            s_totalReceived[user],
             s_totalDonated[user],
             s_lastRequestTime[user],
             cooldown,
@@ -248,5 +324,4 @@ contract BasedAngelVault is Ownable2Step, Pausable, ReentrancyGuard {
             this.isEligibleForRequest(user)
         );
     }
-
 }

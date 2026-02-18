@@ -16,7 +16,13 @@ contract DeployBasedAngelVault is Script {
 
     function run() external returns (BasedAngelVault) {
         vm.startBroadcast();
-        basedAngelVault = new BasedAngelVault(OWNER, OPERATOR, MAX_PER_REQUEST, DAILY_GLOBAL_CAP, USER_COOLDOWN);
+        basedAngelVault = new BasedAngelVault(
+            OWNER,
+            OPERATOR,
+            MAX_PER_REQUEST,
+            DAILY_GLOBAL_CAP,
+            USER_COOLDOWN
+        );
         vm.stopBroadcast();
         return basedAngelVault;
     }

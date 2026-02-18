@@ -44,5 +44,24 @@ contract BaseAngelVaultUpdateDailyCapTest is Test, BasedAngelVaultTest {
         vm.prank(operator);
         basedAngelVault.updateDailyCap(newCap);
     }
+
+    function test_updateDailyCap_RevertsIFNewCapIsZero() public {
+        vm.expectRevert(BasedAngelVault.InvalidAmount.selector);
+
+        vm.prank(owner);
+        basedAngelVault.updateDailyCap(0);
+    }
+
+    function test_updateDailyCap_WorksEvenAfterSpending() public {
+        vm.deal(address(basedAngelVault), 0.1 ether);
+        
+        vm.prank(operator);
+        basedAngelVault.disburse(randomUser, address(0), 0.001 ether);
+
+        vm.prank(owner);
+        basedAngelVault.updateDailyCap(0.05 ether);
+
+        assertEq(basedAngelVault.s_dailyGlobalCap(), 0.05 ether);
+    }
     
 }
