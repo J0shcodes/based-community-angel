@@ -245,8 +245,8 @@ contract BasedAngelVault is Ownable2Step, Pausable, ReentrancyGuard {
             s_lastRequestTime[user],
             cooldown,
             s_hasReceivedFunds[user],
-            this.isEligibleForRequest(user);
-        )
+            this.isEligibleForRequest(user)
+        );
     }
 
 }

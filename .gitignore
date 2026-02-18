@@ -19,6 +19,10 @@ artifacts/
 typechain/
 typechain-types/
 
+# Foundry Coverage
+lcov.info
+report/
+
 # --- Environment & Secrets (CRITICAL) ---
 .env
 .env.local
